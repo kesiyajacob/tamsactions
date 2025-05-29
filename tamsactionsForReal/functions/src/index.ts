@@ -9,15 +9,13 @@
 
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { Stripe } from 'stripe';
+import Stripe from "stripe";
 import cors = require('cors');
 
 admin.initializeApp();
 
 const corsMiddleware = cors({ origin: true });
-const stripe = new Stripe('sk_test_51R2LwII1IKSpNneXYGvwZ7mZaxluwh8ikq6HUOjCLzKkguf57RA1ixO9DYebtpOoRx6bwcwEz1tJSOiYKOWiHV9x00YVLajxJQ', {
-  apiVersion: '2025-02-24.acacia'
-});
+const stripe = new Stripe("YOUR_STRIPE_SECRET_KEY", { apiVersion: "2023-10-16" });
 
 export const createPaymentIntent = functions.https.onRequest((req, res) => {
   corsMiddleware(req, res, async () => {
@@ -56,4 +54,42 @@ export const createPaymentIntent = functions.https.onRequest((req, res) => {
       });
     }
   });
+});
+
+export const createStripeCheckoutSession = functions.https.onRequest(async (req, res) => {
+  try {
+    const { amount, tamAmount, pricePerTam, userEmail } = req.body;
+
+    // Validate input
+    if (!amount || !tamAmount || !pricePerTam || !userEmail) {
+      res.status(400).send("Missing required fields");
+      return;
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${tamAmount} TAMs`,
+              description: `Purchase of ${tamAmount} TAMs at $${pricePerTam} each`,
+            },
+            unit_amount: Math.round(amount * 100), // cents
+          },
+          quantity: 1,
+        },
+      ],
+      customer_email: userEmail,
+      success_url: "https://YOUR_APP_URL/dashboard?success=true",
+      cancel_url: "https://YOUR_APP_URL/dashboard?canceled=true",
+    });
+
+    res.json({ id: session.id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
 });

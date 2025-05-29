@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
-    "@stripe/stripe-js": "^6.0.0",
+    "@stripe/stripe-js": "^6.1.0",
     "@types/react-transition-group": "^4.4.12",
     "firebase": "^11.4.0",
     "react": "^19.0.0",

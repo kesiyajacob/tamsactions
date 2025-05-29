@@ -29,6 +29,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [notifications, setNotifications] = useState<PurchaseRequest[]>([]);
+  const [newRequestNotification, setNewRequestNotification] = useState(false);
   const tamBalance = parseInt(localStorage.getItem("tamBalance") || "200");
   const pendingRequestsCount = requests.filter(
     (r) => r.status === "pending"
@@ -74,9 +75,17 @@ const Dashboard: React.FC = () => {
 
       const querySnapshot = await getDocs(q);
       const requestsData: PurchaseRequest[] = [];
+      let hasNewRequest = false;
+      const now = new Date();
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        const createdAt = data.createdAt.toDate();
+        const hoursDiff =
+          (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        if (hoursDiff <= 24) {
+          hasNewRequest = true;
+        }
         requestsData.push({
           id: doc.id,
           tamAmount: data.tamAmount,
@@ -85,12 +94,13 @@ const Dashboard: React.FC = () => {
           status: data.status,
           buyerEmail: data.buyerEmail,
           sellerEmail: data.userEmail,
-          createdAt: data.createdAt.toDate(),
+          createdAt: createdAt,
           expiresAt: data.expiresAt?.toDate(),
         });
       });
 
       setRequests(requestsData);
+      setNewRequestNotification(hasNewRequest);
     } catch (error) {
       console.error("Error fetching purchase requests:", error);
     }
@@ -236,13 +246,29 @@ const Dashboard: React.FC = () => {
                 onClick={toggleNotifications}
               >
                 📬
-                {notificationCount > 0 && (
+                {(notificationCount > 0 || newRequestNotification) && (
                   <span className="notifications-badge">
-                    {notificationCount}
+                    {notificationCount + (newRequestNotification ? 1 : 0)}
                   </span>
                 )}
               </button>
               <div className="notifications-panel">
+                {/* New purchase request notification */}
+                {newRequestNotification && (
+                  <div className="notification-item new-request">
+                    <div className="notification-header">
+                      <span className="notification-status">
+                        🛎️ New Purchase Request
+                      </span>
+                    </div>
+                    <div className="notification-details">
+                      <p className="notification-message">
+                        You have a new purchase request! Approve or reject it
+                        within 24 hours.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
                     <div
@@ -271,12 +297,6 @@ const Dashboard: React.FC = () => {
                         </p>
                         {notification.status === "approved" && (
                           <>
-                            <p className="expiry-message">
-                              Expires:{" "}
-                              {new Date(
-                                notification.expiresAt!
-                              ).toLocaleString()}
-                            </p>
                             <button
                               className="purchase-button"
                               onClick={() =>
@@ -290,9 +310,9 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                   ))
-                ) : (
+                ) : !newRequestNotification ? (
                   <div className="no-notifications">No new notifications</div>
-                )}
+                ) : null}
               </div>
             </div>
             {pendingRequestsCount > 0 && (

@@ -10,14 +10,12 @@ const stripePromise = loadStripe(
 );
 
 interface CheckoutFormProps {
-  listingId: string;
   tamAmount: number;
   pricePerTam: number;
   totalPrice: number;
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
-  listingId,
   tamAmount,
   pricePerTam,
   totalPrice,
@@ -42,28 +40,25 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         throw new Error("Stripe failed to load");
       }
 
-      // For client-side checkout, we need to use the correct properties
-      // Note: You'll need to have a pre-defined price ID in your Stripe account
-      // or provide a valid configuration that works with client-side checkout
-      const { error } = await stripe.redirectToCheckout({
-        // Use a pre-configured product/price or a custom checkout session URL
-        // You must create this price in the Stripe dashboard first
-        lineItems: [
-          {
-            // Replace this with a real price ID from your Stripe dashboard
-            price: "price_XXXXXXXXXXXX", // Replace with your Stripe price ID
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        successUrl: `${window.location.origin}/dashboard?success=true&listingId=${listingId}&tamAmount=${tamAmount}`,
-        cancelUrl: `${window.location.origin}/dashboard?canceled=true`,
-      });
-
-      if (error) {
-        setError(error.message || "An error occurred during checkout.");
-        setProcessing(false);
+      // Call your Firebase function to create a Stripe Checkout session
+      const response = await fetch(
+        "https://us-central1-tamsactions.cloudfunctions.net/createStripeCheckoutSession",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: totalPrice, // e.g. 374.50
+            tamAmount,
+            pricePerTam,
+            userEmail: auth.currentUser.email,
+          }),
+        }
+      );
+      const session = await response.json();
+      if (!session.id) {
+        throw new Error("Failed to create Stripe session");
       }
+      await stripe.redirectToCheckout({ sessionId: session.id });
     } catch (error) {
       console.error("Checkout error:", error);
       setError(
@@ -109,8 +104,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
 const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { listingId, tamAmount, pricePerTam, totalPrice } =
-    location.state || {};
+  const { tamAmount, pricePerTam, totalPrice } = location.state || {};
 
   // Handle successful payment return
   useEffect(() => {
@@ -151,7 +145,7 @@ const CheckoutPage: React.FC = () => {
     }
   }, [location, navigate]);
 
-  if (!listingId) {
+  if (!tamAmount || !pricePerTam || !totalPrice) {
     return (
       <div className="checkout-container">
         <div className="error-message">
@@ -172,7 +166,6 @@ const CheckoutPage: React.FC = () => {
       <div className="checkout-content">
         <h2>Complete Your Purchase</h2>
         <CheckoutForm
-          listingId={listingId}
           tamAmount={tamAmount}
           pricePerTam={pricePerTam}
           totalPrice={totalPrice}
