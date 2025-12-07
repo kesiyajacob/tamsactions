@@ -1,13 +1,13 @@
 # TAMSACTIONS
-To combat financial insecurity for Queen’s students with a meal plan, we developed Tamsactions. This interactive web application enables Queen's students to buy and sell their TAMs ("trade-a-meal" credits) and recover some of the money they spent on them. Simultaneously, this web application combats financial and food insecurity for students without a meal plan, providing fulfilling meals at a reasonable price.
+To combat financial insecurity for Queen’s students with a meal plan, we developed TAMSACTIONS. This interactive web application enables Queen's students to buy and sell their TAMs ("trade-a-meal" credits) and recover some of the money they spent on them. Simultaneously, this web application combats financial and food insecurity for students without a meal plan, providing fulfilling meals at a reasonable price.
 
 Our project for hackHer 2025.
 
-View Devpost here: [Tamsactions Devpost](https://devpost.com/software/tamsactions)
+View Devpost here: [TAMSACTIONS Devpost](https://devpost.com/software/tamsactions)
 
 ## Demo
 View the demo here:
-[![Watch the demo](https://github.com/user-attachments/assets/0d3ee173-d74e-46fe-a315-24a4b5d3375e))](https://www.youtube.com/watch?v=Lzik9XHBLjs)
+[![Watch the demo](https://github.com/user-attachments/assets/0d3ee173-d74e-46fe-a315-24a4b5d3375e)](https://www.youtube.com/watch?v=Lzik9XHBLjs)
 
 
 ## Gallery
